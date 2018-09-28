@@ -1,0 +1,105 @@
+package ReactionDiffusion;
+
+import java.awt.*;
+import java.awt.image.*;
+
+
+
+class ReactionDiffusion extends Frame{
+	public static void main( String argv[] ){
+		ReactionDiffusion rd = new ReactionDiffusion();
+	}
+	ReactionDiffusion(){
+		ReactionDiffusionCanvas rdc = new ReactionDiffusionCanvas();
+		add( rdc );
+		pack();
+		setVisible( true );
+	}
+}
+
+class ReactionDiffusionCanvas extends Canvas{
+
+  double ang_f = 0.7;
+  double minlen_f = 30;
+  double maxlen_f = 50;
+
+	int width = 600, height = 600;
+	BufferedImage off = new BufferedImage( width, height, java.awt.image.BufferedImage.SCALE_SMOOTH);
+		//bimg = new java.awt.image.BufferedImage(width, height,img.SCALE_SMOOTH);
+	BufferedImage bimg = null;
+  double[] u = new double[width*height];
+
+	public int[] int2rgb( int p ){
+		int[] rgb = new int[3];
+		rgb[0] = (p >> 16) & 0xff;
+		rgb[1] = (p >> 8 ) & 0xff;
+		rgb[2] = (p      ) & 0xff;
+		return rgb;
+	}
+
+
+	public int rgb2int( int r, int g, int b ){
+		if ( r > 255 ) r = 255;
+		if ( g > 255 ) g = 255;
+		if ( b > 255 ) b = 255;
+		if ( r < 0 ) r = 0;
+		if ( g < 0 ) g = 0;
+		if ( b < 0 ) b = 0;
+		return (0xff000000 | r << 16 | g << 8 | b );
+	}
+
+
+	ReactionDiffusionCanvas(){
+		setSize( width, height );
+		setVisible( true );
+	}
+
+  public void diff(){
+			for ( int y = 0; y < height; y++ ){
+				for ( int x = 0; x < width; x++ ){
+          if ( x > 0 && y > 0 && x < width - 1 && y < height - 1 ){
+            double top     = u[ (y-1) * width + x ];
+            double left    = u[ y * width + x-1 ];
+            double right   = u[ y * width + x+1 ];
+            double bottom  = u[ (y+1) * width + x ];
+            double i = u[ y * width + x ];
+            double ni = ( left + top + bottom + right ) / 4.0;
+            if ( ni > i ) u[ y * width + x ] = ni;
+          }
+        }
+      }
+  }
+
+	public void update(Graphics g){ paint(g); }
+	public void paint(Graphics g){
+      Image img = null;
+
+
+		Graphics2D og = (Graphics2D)off.getGraphics();
+    BasicStroke BStroke = new BasicStroke(2.0f);
+    og.setStroke(BStroke);
+
+    og.setColor(Color.yellow);
+    tick( 0, og, width/2, 0 );
+
+
+    g.drawImage( off , 0, 0, this);
+
+  }
+
+  public void tick(int cnt, Graphics2D g, int x, int y ){
+    double ang = ( 180 * ang_f ) * Math.random() * Math.PI / 180.0;
+    double len = minlen_f + ( maxlen_f - minlen_f ) * Math.random();
+    double th = Math.PI - ang / 2.0;
+
+    double py = len * Math.sin( th ) + y;
+    double px = len * Math.cos( th ) + x;
+
+
+    g.drawLine( x,height - y, (int)px, height - (int)py);
+
+    if ( cnt > 10 ) return;
+    tick( cnt, g, px, py );
+  }
+
+}
